@@ -1,16 +1,16 @@
 
 {
     "_QPVersion": "0.1.1",
-    "name": "#{name}",
-    "id": "#{id}",
-    "author": "#{author}",
+    "name": "Better Saber Qolors",
+    "id": "BetterSaberQolors",
+    "author": "Bobby Shmurner",
     "coverImage": "cover.png",
     "version": "0.1.0",
     "packageId": "com.beatgames.beatsaber",
     "packageVersion": "1.17.1",
-    "description": "#{description}",
+    "description": "Allows for a better experience when choosing your saber colors",
     "modFiles": [
-        "lib#{id}.so"
+        "libBetterSaberQolors.so"
     ],
     "libraryFiles": [
         "libbeatsaber-hook_2_3_0.so"

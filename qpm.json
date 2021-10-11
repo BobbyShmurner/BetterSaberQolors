@@ -2,8 +2,8 @@
   "sharedDir": "shared",
   "dependenciesDir": "extern",
   "info": {
-    "name": "#{name}",
-    "id": "#{id}",
+    "name": "Better Saber Colors",
+    "id": "BetterSaberQolors",
     "version": "0.1.0",
     "url": null,
     "additionalData": {}
@@ -11,12 +11,22 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "*",
+      "versionRange": "2.3.2",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
         ]
       }
+    },
+    {
+      "id": "codegen",
+      "versionRange": "0.14.0",
+      "additionalData": {}
+    },
+    {
+      "id": "questui",
+      "versionRange": "0.11.1",
+      "additionalData": {}
     }
   ],
   "additionalData": {}

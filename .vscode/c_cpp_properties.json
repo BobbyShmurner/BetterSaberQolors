@@ -2,7 +2,7 @@
   "configurations": [
     {
       "defines": [
-        "ID=\"#{id}\"",
+        "ID=\"BetterSaberQolors\"",
         "VERSION=\"0.1.0\"",
         "__GNUC__",
         "__aarch64__"
@@ -13,7 +13,7 @@
         "${workspaceFolder}/include",
         "${workspaceFolder}/extern/**",
         "${workspaceFolder}/extern/libil2cpp/il2cpp/libil2cpp",
-        "#{ndkpath}/**"
+        "C:/Android/andriod-ndk/**"
       ],
       "name": "Quest",
       "cStandard": "c11",

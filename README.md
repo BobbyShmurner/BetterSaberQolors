@@ -1,6 +1,6 @@
-# #{name}
+# Better Saber Colors
 
-#{description}
+Allows for a better experience when choosing your saber colors
 
 ## Credits
 
