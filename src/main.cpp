@@ -164,11 +164,6 @@ void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController) {
     });
     redInput->set_name(il2cpp_utils::newcsstr("RedInputField"));
 
-    for (int i = 1; i < redInput->get_transform()->get_childCount(); i++) {
-        getLogger().info("Red Input Child %i: %s", i, to_utf8(csstrtostr(redInput->get_transform()->GetChild(i)->get_name())).c_str());
-        redInput->get_transform()->GetChild(i)->get_gameObject()->SetActive(false);
-    }
-
     UnityEngine::RectTransform* redTrans = redInput->GetComponent<UnityEngine::RectTransform*>();
 
     redTrans->set_position(redTrans->get_position() + UnityEngine::Vector3(0.92f, 0, 0));
@@ -241,24 +236,9 @@ MAKE_HOOK_MATCH(RefreshTextValues_HSVColorChange, &GlobalNamespace::HSVPanelCont
     RefreshTextValues(rgbPanelController);
 
     // Update Input BGs
-
-    // redInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(redInput->GetComponent<HMUI::InputFieldView*>()->selectionState);
-    // greenInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(greenInput->GetComponent<HMUI::InputFieldView*>()->selectionState);
-    // blueInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(blueInput->GetComponent<HMUI::InputFieldView*>()->selectionState);
-
-    // redInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Highlighted);
-    // greenInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Highlighted);
-    // blueInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Highlighted);
-
-    redInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(UnityEngine::UI::Selectable::SelectionState::Highlighted, true);
-    greenInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(UnityEngine::UI::Selectable::SelectionState::Highlighted, true);
-    blueInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(UnityEngine::UI::Selectable::SelectionState::Highlighted, true);
-
-    getLogger().info("Printing red Sliders Parent's Children...");
-    for (int i = 1; i < redInput->get_transform()->get_parent()->get_childCount(); i++) {
-        getLogger().info("Red Input Parent's Child (%s) %i: %s", to_utf8(csstrtostr(redInput->get_transform()->get_parent()->get_name())).c_str(), i, to_utf8(csstrtostr(redInput->get_transform()->get_parent()->GetChild(i)->get_name())).c_str());
-        //redInput->get_transform()->GetChild(i)->get_gameObject()->SetActive(false);
-    }
+    redInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(redInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
+    greenInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(greenInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
+    blueInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(blueInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
 }
 
 // Called later on in the game loading - a good time to install function hooks
