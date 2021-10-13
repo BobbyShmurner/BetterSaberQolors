@@ -88,22 +88,36 @@ void UpdateSliderColor(SliderChangeColor sliderColor, GlobalNamespace::RGBPanelC
 
         switch(sliderColor) {
             case(SliderChangeColor::Red):
+                getLogger().info("Getting Red Slider...");
+
                 newCol = UnityEngine::Color(value, rgbPanelController->color.g, rgbPanelController->color.b, 1);
                 slider = rgbPanelController->redSlider;
+
+                getLogger().info("Got Red Slider!");
 
                 break;
 
             case(SliderChangeColor::Green):
+                getLogger().info("Getting Green Slider...");
+
                 newCol = UnityEngine::Color(rgbPanelController->color.r, value, rgbPanelController->color.b, 1);
                 slider = rgbPanelController->greenSlider;
+
+                getLogger().info("Got Green Slider!");
 
                 break;
 
             case(SliderChangeColor::Blue):
+                getLogger().info("Getting Blue Slider...");
+
                 newCol = UnityEngine::Color(rgbPanelController->color.r, rgbPanelController->color.g, value, 1);
                 slider = rgbPanelController->blueSlider;
 
+                getLogger().info("Got Blue Slider!");
+
                 break;
+            default:
+                getLogger().info("sadge :(, %i", sliderColor);
         }
 
         rgbPanelController->set_color(newCol);
@@ -148,62 +162,66 @@ extern "C" void setup(ModInfo& info) {
     getLogger().info("Completed setup!");
 }
 
+void InitSlider(HMUI::InputFieldView*& input, SliderChangeColor sliderColor, HMUI::ColorGradientSlider* slider, std::string name, GlobalNamespace::RGBPanelController* rgbPanelController) {
+    getLogger().info("%s: %i", name.c_str(), sliderColor);
+    
+    input = QuestUI::BeatSaberUI::CreateStringSetting(slider->get_transform(), std::string_view(name), std::string_view("ur ma :)"), [&, rgbPanelController, sliderColor, name](std::string_view stringViewValue) {
+        getLogger().info("Starting Color Update For %s", name.c_str());
+        getLogger().info("%s: %i", name.c_str(), sliderColor);
+
+
+        UpdateSliderColor(sliderColor, rgbPanelController, stringViewValue);
+        input->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Normal);
+    });
+    input->set_name(il2cpp_utils::newcsstr(name + "InputField"));
+
+    UnityEngine::RectTransform* trans = input->GetComponent<UnityEngine::RectTransform*>();
+
+    trans->set_position(trans->get_position() + UnityEngine::Vector3(0.92f, 0, 0));
+
+    trans->set_anchorMin({0.95f, 1});
+    trans->set_anchorMax({-0.1f, 1});
+}
+
 void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController) {
     if (redInput != nullptr) return;
     getLogger().info("Init Inputs :)");
 
+    // -- Red Input --
+
     HMUI::ColorGradientSlider* redSlider = rgbPanelController->redSlider;
     redSlider->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({-0.2f, 1});
+    
+    InitSlider(redInput, SliderChangeColor::Red, redSlider, "Red", rgbPanelController);
 
-    redInput = QuestUI::BeatSaberUI::CreateStringSetting(redSlider->get_transform(), std::string_view("Red"), std::string_view(std::to_string((int)rgbPanelController->color.r)), [&, rgbPanelController](std::string_view stringViewValue) {
-        getLogger().info("Starting Color Update For Red");
-
-        UpdateSliderColor(SliderChangeColor::Red, rgbPanelController, stringViewValue);
-
-        redInput->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Disabled);
-    });
-    redInput->set_name(il2cpp_utils::newcsstr("RedInputField"));
-
-    UnityEngine::RectTransform* redTrans = redInput->GetComponent<UnityEngine::RectTransform*>();
-
-    redTrans->set_position(redTrans->get_position() + UnityEngine::Vector3(0.92f, 0, 0));
-
-    redTrans->set_anchorMin({0.95f, 1});
-    redTrans->set_anchorMax({-0.1f, 1});
+    // -- Green Input --
 
     HMUI::ColorGradientSlider* greenSlider = rgbPanelController->greenSlider;
     greenSlider->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({-0.3f, 1});
 
-    greenInput = QuestUI::BeatSaberUI::CreateStringSetting(greenSlider->get_transform(), std::string_view("Green"), std::string_view(std::to_string((int)rgbPanelController->color.g)), [&, rgbPanelController](std::string_view stringViewValue) {
-        getLogger().info("Starting Color Update For Green");
+    InitSlider(greenInput, SliderChangeColor::Green, greenSlider, "Green", rgbPanelController);
 
-        UpdateSliderColor(SliderChangeColor::Green, rgbPanelController, stringViewValue);
-    });
-    greenInput->set_name(il2cpp_utils::newcsstr("GreenInputField"));
-
-    UnityEngine::RectTransform* greenTrans = greenInput->GetComponent<UnityEngine::RectTransform*>();
-    
-    greenTrans->set_position(greenTrans->get_position() + UnityEngine::Vector3(0.92f, 0, 0));
-
-    greenTrans->set_anchorMin({0.95f, 1});
-    greenTrans->set_anchorMax({-0.1f, 1});
+    // -- blue Input --
 
     HMUI::ColorGradientSlider* blueSlider = rgbPanelController->blueSlider;
     blueSlider->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({-0.39f, 1});
 
-    blueInput = QuestUI::BeatSaberUI::CreateStringSetting(blueSlider->get_transform(), std::string_view("Blue"), std::string_view(std::to_string((int)rgbPanelController->color.b)), [&, rgbPanelController](std::string_view stringViewValue) {
-        getLogger().info("Starting Color Update For Blue");
+    InitSlider(blueInput, SliderChangeColor::Blue, blueSlider, "Blue", rgbPanelController);
+}
 
-        UpdateSliderColor(SliderChangeColor::Blue, rgbPanelController, stringViewValue);
-    });
-    blueInput->set_name(il2cpp_utils::newcsstr("BlueInputField"));
+void LogHierarchy(UnityEngine::Transform* trans, int level = 0) {
+    if (level == 0) getLogger().info("Logging Children for %s:", to_utf8(csstrtostr(trans->get_name())).c_str());
 
-    UnityEngine::RectTransform* blueTrans = blueInput->GetComponent<UnityEngine::RectTransform*>();
-    
-    blueTrans->set_position(blueTrans->get_position() + UnityEngine::Vector3(0.92f, 0, 0));
+    std::string start;
+    for (int i = 0; i < level; i++) {
+        start += "\t";
+    }
+    start += "- ";
 
-    blueTrans->set_anchorMin({0.95f, 1});
-    blueTrans->set_anchorMax({-0.1f, 1});
+    for (int i = 0; i < trans->get_childCount(); i++) {
+        getLogger().info("%s[%i] %s", start.c_str(), i, to_utf8(csstrtostr(trans->GetChild(i)->get_name())).c_str());
+        LogHierarchy(trans->GetChild(i), level + 1);
+    }
 }
 
 void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController) {
@@ -218,8 +236,10 @@ void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController) 
     // The Substrings remove the "R: ", "G: " and "B: " from the text strings, and also caps the length of the text
 
     redInput->SetText(redText->Substring(3, std::min(redText->get_Length() - 3, 3)));
-    greenInput->SetText(greenText->Substring(3));
-    blueInput->SetText(blueText->Substring(3));
+    greenInput->SetText(greenText->Substring(3, std::min(greenText->get_Length() - 3, 3)));
+    blueInput->SetText(blueText->Substring(3, std::min(blueText->get_Length() - 3, 3)));
+
+    LogHierarchy(redInput->get_transform());
 
     return;
 }
