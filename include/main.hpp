@@ -28,5 +28,4 @@ Logger& getLogger();
 void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController);
 void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController);
 void UpdateSliderColor(SliderChangeColor sliderColor, GlobalNamespace::RGBPanelController* rgbPanelController, std::string_view stringViewValue);
-
-//void SetCustomBGHighlightColors(HMUI::InputFieldViewStaticAnimations* self, HMUI::InputFieldView::SelectionState state);
+void UpdateBGStates();

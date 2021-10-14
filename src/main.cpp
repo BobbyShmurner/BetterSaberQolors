@@ -6,6 +6,10 @@
 
 #include "VRUIControls/VRGraphicRaycaster.hpp"
 
+#include "custom-types/shared/coroutine.hpp"
+
+#include "System/Collections/IEnumerator.hpp"
+
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
@@ -20,21 +24,27 @@
 #include "UnityEngine/AnimationClip.hpp"
 #include "UnityEngine/AnimationCurve.hpp"
 #include "UnityEngine/Keyframe.hpp"
+#include "UnityEngine/WaitForSeconds.hpp"
+#include "UnityEngine/WaitForEndOfFrame.hpp"
 
 #include "HMUI/ImageView.hpp"
 #include "HMUI/Screen.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/ColorGradientSlider.hpp"
 #include "HMUI/Touchable.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
+#include "TMPro/FontStyles.hpp"
 
 #include "GlobalNamespace/ColorsOverrideSettingsPanelController.hpp"
 #include "GlobalNamespace/ColorSchemesSettings.hpp"
 #include "GlobalNamespace/EditColorSchemeController.hpp"
 #include "GlobalNamespace/ColorSchemeColorsToggleGroup.hpp"
 #include "GlobalNamespace/EditColorSchemeController.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
 
 static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
@@ -53,6 +63,14 @@ Configuration& getConfig() {
 Logger& getLogger() {
     static Logger* logger = new Logger(modInfo);
     return *logger;
+}
+
+// This is a VERY shity way to fix a weird highlighting bug
+custom_types::Helpers::Coroutine UpdateBGNextFrame() {
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
+    UpdateBGStates();
+
+    co_return;
 }
 
 bool isNumber(const std::string& str)
@@ -76,6 +94,31 @@ bool isValidSaberColor(std::string strValue) {
     return false;
 }
 
+// Called at the early stages of game loading
+extern "C" void setup(ModInfo& info) {
+    info.id = ID;
+    info.version = VERSION;
+    modInfo = info;
+	
+    getConfig().Load(); // Load the config file
+    getLogger().info("Completed setup!");
+}
+
+void LogHierarchy(UnityEngine::Transform* trans, int level = 0) {
+    if (level == 0) getLogger().info("Logging Hierarchy for %s:", to_utf8(csstrtostr(trans->get_name())).c_str());
+
+    std::string start;
+    for (int i = 0; i < level; i++) {
+        start += "\t";
+    }
+    start += "- ";
+
+    for (int i = 0; i < trans->get_childCount(); i++) {
+        getLogger().info("%s[%i] %s", start.c_str(), i, to_utf8(csstrtostr(trans->GetChild(i)->get_name())).c_str());
+        LogHierarchy(trans->GetChild(i), level + 1);
+    }
+}
+
 void UpdateSliderColor(SliderChangeColor sliderColor, GlobalNamespace::RGBPanelController* rgbPanelController, std::string_view stringViewValue) {
     std::string stringValue = (std::string)stringViewValue;
 
@@ -88,36 +131,22 @@ void UpdateSliderColor(SliderChangeColor sliderColor, GlobalNamespace::RGBPanelC
 
         switch(sliderColor) {
             case(SliderChangeColor::Red):
-                getLogger().info("Getting Red Slider...");
-
                 newCol = UnityEngine::Color(value, rgbPanelController->color.g, rgbPanelController->color.b, 1);
                 slider = rgbPanelController->redSlider;
-
-                getLogger().info("Got Red Slider!");
 
                 break;
 
             case(SliderChangeColor::Green):
-                getLogger().info("Getting Green Slider...");
-
                 newCol = UnityEngine::Color(rgbPanelController->color.r, value, rgbPanelController->color.b, 1);
                 slider = rgbPanelController->greenSlider;
-
-                getLogger().info("Got Green Slider!");
 
                 break;
 
             case(SliderChangeColor::Blue):
-                getLogger().info("Getting Blue Slider...");
-
                 newCol = UnityEngine::Color(rgbPanelController->color.r, rgbPanelController->color.g, value, 1);
                 slider = rgbPanelController->blueSlider;
 
-                getLogger().info("Got Blue Slider!");
-
                 break;
-            default:
-                getLogger().info("sadge :(, %i", sliderColor);
         }
 
         rgbPanelController->set_color(newCol);
@@ -152,23 +181,9 @@ void SetBGColor(HMUI::InputFieldView* inputFieldView) {
     bgImageView->set_color(newCol);
 }
 
-// Called at the early stages of game loading
-extern "C" void setup(ModInfo& info) {
-    info.id = ID;
-    info.version = VERSION;
-    modInfo = info;
-	
-    getConfig().Load(); // Load the config file
-    getLogger().info("Completed setup!");
-}
-
 void InitSlider(HMUI::InputFieldView*& input, SliderChangeColor sliderColor, HMUI::ColorGradientSlider* slider, std::string name, GlobalNamespace::RGBPanelController* rgbPanelController) {
-    getLogger().info("%s: %i", name.c_str(), sliderColor);
-    
     input = QuestUI::BeatSaberUI::CreateStringSetting(slider->get_transform(), std::string_view(name), std::string_view("ur ma :)"), [&, rgbPanelController, sliderColor, name](std::string_view stringViewValue) {
         getLogger().info("Starting Color Update For %s", name.c_str());
-        getLogger().info("%s: %i", name.c_str(), sliderColor);
-
 
         UpdateSliderColor(sliderColor, rgbPanelController, stringViewValue);
         input->GetComponent<HMUI::InputFieldViewStaticAnimations*>()->HandleInputFieldViewSelectionStateDidChange(HMUI::InputFieldView::SelectionState::Normal);
@@ -181,6 +196,8 @@ void InitSlider(HMUI::InputFieldView*& input, SliderChangeColor sliderColor, HMU
 
     trans->set_anchorMin({0.95f, 1});
     trans->set_anchorMax({-0.1f, 1});
+
+    slider->DoStateTransition(UnityEngine::UI::Selectable::SelectionState::Normal, true);
 }
 
 void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController) {
@@ -201,7 +218,7 @@ void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController) {
 
     InitSlider(greenInput, SliderChangeColor::Green, greenSlider, "Green", rgbPanelController);
 
-    // -- blue Input --
+    // -- Blue Input --
 
     HMUI::ColorGradientSlider* blueSlider = rgbPanelController->blueSlider;
     blueSlider->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({-0.39f, 1});
@@ -209,24 +226,17 @@ void InitSliderInputs(GlobalNamespace::RGBPanelController* rgbPanelController) {
     InitSlider(blueInput, SliderChangeColor::Blue, blueSlider, "Blue", rgbPanelController);
 }
 
-void LogHierarchy(UnityEngine::Transform* trans, int level = 0) {
-    if (level == 0) getLogger().info("Logging Children for %s:", to_utf8(csstrtostr(trans->get_name())).c_str());
-
-    std::string start;
-    for (int i = 0; i < level; i++) {
-        start += "\t";
-    }
-    start += "- ";
-
-    for (int i = 0; i < trans->get_childCount(); i++) {
-        getLogger().info("%s[%i] %s", start.c_str(), i, to_utf8(csstrtostr(trans->GetChild(i)->get_name())).c_str());
-        LogHierarchy(trans->GetChild(i), level + 1);
-    }
+void UpdateBGStates() {
+    redInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(redInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
+    greenInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(greenInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
+    blueInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(blueInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
 }
 
 void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController) {
+    bool didInit = false;
     if (redInput == nullptr) {
         InitSliderInputs(rgbPanelController);
+        didInit = true;
     }
 
     Il2CppString* redText = rgbPanelController->redSlider->valueText->m_text;
@@ -241,6 +251,8 @@ void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController) 
 
     LogHierarchy(redInput->get_transform());
 
+    GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator*>(custom_types::Helpers::CoroutineHelper::New(UpdateBGNextFrame())));
+
     return;
 }
 
@@ -254,11 +266,6 @@ MAKE_HOOK_MATCH(RefreshTextValues_HSVColorChange, &GlobalNamespace::HSVPanelCont
 
     GlobalNamespace::RGBPanelController* rgbPanelController = self->GetComponentInParent<GlobalNamespace::EditColorSchemeController*>()->rgbPanelController;
     RefreshTextValues(rgbPanelController);
-
-    // Update Input BGs
-    redInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(redInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
-    greenInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(greenInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
-    blueInput->GetComponent<HMUI::InputFieldView*>()->DoStateTransition(blueInput->GetComponent<HMUI::InputFieldView*>()->selectionState.value, true);
 }
 
 // Called later on in the game loading - a good time to install function hooks
