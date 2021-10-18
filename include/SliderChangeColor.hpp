@@ -3,5 +3,7 @@
 enum SliderChangeColor {
     Red,
     Blue,
-    Green
+    Green,
+
+    Hex
 };
