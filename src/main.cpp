@@ -192,6 +192,8 @@ void SetBGColor(HMUI::InputFieldView* inputFieldView) {
     } else if (nameStr == "HexInputField") {
         RefreshHexBG();
         return;
+    } else {
+        newCol = {0, 0, 0, 0.5f}; // This is the default bg colour
     }
 
     HMUI::ImageView* bgImageView = inputFieldView->get_transform()->FindChild(il2cpp_utils::newcsstr("BG"))->GetComponent<HMUI::ImageView*>();
@@ -276,6 +278,7 @@ void UpdateBGStates() {
 }
 
 void RefreshTextValues(GlobalNamespace::RGBPanelController* rgbPanelController) {
+    if (rgbPanelController == nullptr) return;
     if (redInput == nullptr) {
         InitSliderInputs(rgbPanelController);
     }

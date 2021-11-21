@@ -7,7 +7,7 @@ if ($?) {
             if ($args[1] -eq "--self") {
                 & $PSScriptRoot/start-logging.ps1 --self
             } elseif ($args[1] -eq "--file") {
-                & $PSScriptRoot/start-logging.ps1 --file
+                & $PSScriptRoot/start-logging.ps1 --file $args[2]
             } elseif ($args[1] -eq "--custom") {
                 & $PSScriptRoot/start-logging.ps1 --custom $args[2]
             } else  {
